@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title> Primicias </title>
+
+<style>
+body { font-family:'Times New Roman', serif; margin:0; background:#f4f6f9; color:#333; }
+
+header {
+  background:#0a6b3d;
+  color:white;
+  padding:25px;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:20px;
+  border-bottom:4px solid #0f8a4f;
+}
+
+header img {
+  height:50px;
+  width:50px;
+  border-radius:50%;
+  object-fit:cover;
+}
+
+table {
+  width:95%;
+  margin:30px auto;
+  border-collapse: collapse;
+  background:white;
+  border-radius:10px;
+  overflow:hidden;
+  box-shadow:0 2px 6px rgba(0,0,0,0.1);
+}
+
+th {
+  background:#0a6b3d;
+  color:white;
+  padding:14px;
+  font-size:18px;
+}
+
+td {
+  padding:12px;
+  border-bottom:1px solid #ddd;
+  text-align:center;
+}
+
+tr:hover { background:#f1f1f1; }
+
+button {
+  padding:8px 14px;
+  background:#28a745;
+  color:white;
+  border:none;
+  border-radius:5px;
+  cursor:pointer;
+}
+
+button:hover { background:#1e7e34; }
+
+.btn-delete {
+  background:#d9534f;
+}
+.btn-delete:hover {
+  background:#b52b27;
+}
+
+tr.colaborador {
+  background:#e9f7ef;
+  font-style:italic;
+}
+</style>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD3Fpj_gIT9XO9JOfO3E6-Ws9NfzIoRX8Q",
+  authDomain: "actividad-regala-una-son-5e24c.firebaseapp.com",
+  databaseURL: "https://actividad-regala-una-son-5e24c-default-rtdb.firebaseio.com",
+  projectId: "actividad-regala-una-son-5e24c",
+  storageBucket: "actividad-regala-una-son-5e24c.firebasestorage.app",
+  messagingSenderId: "992415955362",
+  appId: "1:992415955362:web:24bafb52947a6bedaa9afb"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+/* 🍎 COMIDA (CADA UNA 3 VECES) */
+const comidas = [
+  "Arroz","Arroz","Arroz",
+  "Frijoles","Frijoles","Frijoles",
+  "Azúcar","Azúcar","Azúcar",
+  "Café","Café","Café",
+  "Espaguetis","Espaguetis","Espaguetis",
+  "Salsa dulce","Salsa dulce","Salsa dulce",
+  "Salsa ácida","Salsa ácida","Salsa ácida",
+  "Margarina","Margarina","Margarina",
+  "Confle","Confle","Confle",
+  "Consomé de pollo","Consomé de pollo","Consomé de pollo",
+  "Sal","Sal","Sal",
+  "Manteca","Manteca","Manteca",
+  "Aceite","Aceite","Aceite",
+  "Tomates","Tomates","Tomates",
+  "Cebolla","Cebolla","Cebolla",
+  "Chile dulce","Chile dulce","Chile dulce",
+  "Zanahorias","Zanahorias","Zanahorias",
+  "Remolachas","Remolachas","Remolachas",
+  "Repollo","Repollo","Repollo",
+  "Lechuga","Lechuga","Lechuga",
+  "Sandía","Sandía","Sandía",
+  "Manzana","Manzana","Manzana",
+  "Melón","Melón","Melón",
+  "Mango","Mango","Mango",
+  "Naranjas","Naranjas","Naranjas",
+  "Mandarina","Mandarina","Mandarina",
+  "Bananos","Bananos","Bananos",
+  "Uvas","Uvas","Uvas",
+  "Avena","Avena","Avena",
+  "Maseca","Maseca","Maseca",
+  "Harina","Harina","Harina",
+  "Pepino", "Pepino", "Pepino",
+  "Minimo Verde", "Minimo Verde", "Minimo Verde"
+];
+
+window.addEventListener("DOMContentLoaded", () => {
+  cargarTabla();
+  onValue(ref(db, "comida"), (snap) => {
+    actualizar(snap.val());
+  });
+});
+
+function cargarTabla() {
+  const tabla = document.getElementById("tablaComida");
+  tabla.innerHTML = `<tr><th>Producto</th><th>Acción</th></tr>`;
+
+  comidas.forEach((c, i) => {
+    const fila = document.createElement("tr");
+    fila.dataset.comida = c + i;
+
+    fila.innerHTML = `
+      <td>${c}</td>
+      <td>
+        <button onclick="agregar('${c}','${c+i}')">
+          Agregar colaborador
+        </button>
+      </td>
+    `;
+    tabla.appendChild(fila);
+  });
+}
+
+window.agregar = function(comida, idLocal) {
+  const nombre = prompt("Ingrese su nombre:");
+  if (!nombre) return;
+
+  push(ref(db, "comida"), {
+    comida,
+    idLocal,
+    colaborador: nombre
+  });
+};
+
+window.eliminar = function(id) {
+  if (confirm("¿Eliminar registro?")) {
+    remove(ref(db, "comida/" + id));
+  }
+};
+
+function actualizar(data) {
+  document.querySelectorAll(".colaborador").forEach(f => f.remove());
+  cargarTabla();
+
+  if (!data) return;
+
+  Object.entries(data).forEach(([id, c]) => {
+    const fila = document.querySelector(`tr[data-comida="${c.idLocal}"]`);
+    if (fila) fila.remove();
+
+    const tabla = document.getElementById("tablaComida");
+    const filaNueva = document.createElement("tr");
+    filaNueva.className = "colaborador";
+
+    filaNueva.innerHTML = `
+      <td>
+        <strong>${c.colaborador}</strong> donará <strong>${c.comida}</strong>
+      </td>
+      <td>
+        <button class="btn-delete" onclick="eliminar('${id}')">
+          Eliminar
+        </button>
+      </td>
+    `;
+    tabla.appendChild(filaNueva);
+  });
+}
+</script>
+</head>
+
+<body>
+
+<header>
+  <img src="imagen1.jpg">
+  <h1>Primicias</h1>
+  <img src="imagen1.jpg">
+</header>
+
+<table id="tablaComida"></table>
+
+</body>
+</html>
